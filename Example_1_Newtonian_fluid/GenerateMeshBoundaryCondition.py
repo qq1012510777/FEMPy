@@ -7,8 +7,8 @@ L = 80
 W = 60
 
 # Number of points in each dimension
-num_points_x = 81  # num_points_x intervals along the length
-num_points_y = 61  # num_points_y intervals along the width
+num_points_x = 11  # num_points_x intervals along the length
+num_points_y = 11  # num_points_y intervals along the width
 
 # Generate mesh grid
 x = np.linspace(0, L, num_points_x)
@@ -32,6 +32,7 @@ for i in range(num_points_y - 1):
 
         # Two triangles for each cell
         elements.append([p1, p2, p4, p3])
+       
 
 # Convert lists to arrays
 points = np.array(points)
@@ -67,3 +68,4 @@ plt.show()
 with h5py.File("Mesh.h5", "w") as f:
     f.create_dataset("Points", data=points)
     f.create_dataset("Elements", data=elements)
+
