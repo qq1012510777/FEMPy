@@ -144,7 +144,7 @@ for e = 1:NumEles
             Length_boundary = sqrt((pnt_x_4(l) - pnt_x_4(mod(l, 4)+1))^2+ ...
                 (pnt_y_4(l) - pnt_y_4(mod(l, 4)+1))^2);
             if pnt_x_4(l) == 0 && pnt_x_4(mod(l, 4)+1) == 0
-                p_i_e([l, mod(l, 4) + 1]) = 1000;
+                p_i_e([l, mod(l, 4) + 1]) = -1000;
             elseif pnt_x_4(l) == 80 && pnt_x_4(mod(l, 4)+1) == 80
                 p_i_e([l, mod(l, 4) + 1]) = 0;
             end
@@ -152,14 +152,24 @@ for e = 1:NumEles
             cos_theta_y = 0;
             for i = 1:6
                 xi_e_i = xi(i);
-                Phi_e = double(subs(Phi, [xi_e, eta_e], [xi_e_i, xi_e_i]));
-                Psi_e = double(subs(Psi, [xi_e, eta_e], [xi_e_i, xi_e_i]));
-                F1 = F1 + w(i) * Phi_e * Psi_e' * p_i_e * cos_theta_x * Length_boundary;
-                F2 = F2 + w(i) * Phi_e * Psi_e' * p_i_e * cos_theta_y * Length_boundary;
+                eta_e_i = xi(i);
+                if l == 1
+                    eta_e_i = -1;
+                elseif l == 2
+                    xi_e_i = 1;
+                elseif l == 3
+                    eta_e_i = 1;
+                elseif l == 4
+                    xi_e_i = -1;
+                end
+                Phi_e = double(subs(Phi, [xi_e, eta_e], [xi_e_i, eta_e_i]));
+                Psi_e = double(subs(Psi, [xi_e, eta_e], [xi_e_i, eta_e_i]));
+                F1 = F1 + w(i) * Phi_e * Psi_e' * p_i_e * cos_theta_x * Length_boundary / 2;
+                F2 = F2 + w(i) * Phi_e * Psi_e' * p_i_e * cos_theta_y * Length_boundary / 2;
             end
         elseif pnt_y_4(l) == 0 && pnt_y_4(mod(l, 4)+1) == 0 ...
                 || pnt_y_4(l) == 60 && pnt_y_4(mod(l, 4)+1) == 60
-        
+
             ID_reOrgnized = Elements_h(e, [1, 2, 3, 6, 9, 8, 7, 4]);
             localID_v = (l - 1) * 2 + 1;
             %%%[pnt_y_4(l), pnt_y_4(mod(l, 4)+1)]
@@ -200,7 +210,7 @@ end
 velocity_condition(find(velocity_condition(:, 1) == 0, 1):end, :) = [];
 
 % ___________ velocity boundary _______________
-for i = 1 : size(velocity_condition, 1)
+for i = 1:size(velocity_condition, 1)
     PntID_v = velocity_condition(i, 1);
 
     b = b - K(:, PntID_v) .* velocity_condition(i, 2);
@@ -208,7 +218,7 @@ for i = 1 : size(velocity_condition, 1)
     K(PntID_v, :) = 0;
     K(PntID_v, PntID_v) = 1;
     b(PntID_v, 1) = velocity_condition(i, 2);
-    
+
     PntID_v = PntID_v + NumPnts_h;
     b = b - K(:, PntID_v) .* velocity_condition(i, 3);
     K(:, PntID_v) = 0;
@@ -238,6 +248,6 @@ title("Velocity vectors")
 patch('vertices', Points_h, 'faces', Elements_h(:, [1, 2, 3, 6, 9, 8, 7, 4]), ...
     'facevertexcdata', zeros(NumPnts_h, 1), 'edgealpha', 1, 'facealpha', 0);
 hold on
-quiver(Points_h(:, 1), Points_h(:, 2), u, v);
+quiver(Points_h(:, 1), Points_h(:, 2), u, v, 1);
 hold on
 pbaspect([Lx, Ly, 1])
