@@ -6,8 +6,9 @@ import os
 import sys
 
 # Dimensions
-L = .8
-W = .6
+L = 0.2
+W = 0.1
+
 
 gmsh.initialize()
 gmsh.model.add("Structured_Mesh")
@@ -105,11 +106,80 @@ Elements_h = np.transpose(Elements_h)
 # print(Points_h, Elements_h)
 gmsh.finalize()
 
+# —————————— renumber the elements_h
+NumPnts = np.shape(Points)[0]
+NumPnts_h = np.shape(Points_h)[0]
+visited_ = np.zeros((NumPnts_h, 1))
+Points_new = np.zeros((NumPnts_h, 3))
+Points_new[0:NumPnts, :] = Points
+NumEles = np.shape(Elements)[0]
+
+tmpPnt = NumPnts
+Elements_new = Elements_h[:, [1, 3, 4, 5, 7]].copy()
+
+for i in range(NumEles):
+    for j in range(5):
+        PntID_y = Elements_new[i, j]
+        if visited_[PntID_y] == 0:
+            visited_[PntID_y] = tmpPnt
+            Points_new[tmpPnt, :] = Points_h[Elements_new[i, j], :]
+            Elements_new[i, j] = tmpPnt
+            tmpPnt = tmpPnt + 1
+        else:
+            Elements_new[i, j] = visited_[PntID_y]
+Elements_h[:, [0, 2, 8, 6]] = Elements
+Elements_h[:, [1, 3, 4, 5, 7]] = Elements_new
+Points_h = Points_new
+
+# --------------------------------------
+# ElementID, LocalEdgeID, P1, P2, cos_theta_x, cos_theta_y
+JBP = np.zeros((NumEles * 3, 6)) - 2
+tmp_o = 0
+for i in range(NumEles):
+    for j in range(4):
+        PntID1 = Elements[i, j]
+        PntID2 = Elements[i, (j + 1) % 4]
+        if (Points[PntID1, 0] == 0 and Points[PntID2, 0] == 0):
+            NormVecOuter = np.array(
+                [Points[PntID2, 1] - Points[PntID1, 1], Points[PntID1, 0] - Points[PntID2, 0]])
+            NormVecOuter = NormVecOuter / np.linalg.norm(NormVecOuter)
+            JBP[tmp_o, :] = [i, j, 1e4, 1e4, NormVecOuter[0], NormVecOuter[1]]
+            # print(JBP[tmp_o, :] )
+            tmp_o = tmp_o + 1
+        # elif Points[PntID1, 0] == 0.2 and Points[PntID2, 0] == 0.2:
+        #     NormVecOuter = np.array(
+        #         [Points[PntID2, 1] - Points[PntID1, 1], Points[PntID1, 0] - Points[PntID2, 0]])
+        #     NormVecOuter = NormVecOuter / np.linalg.norm(NormVecOuter)
+        #     JBP[tmp_o, :] = [i, j, 0, 0, NormVecOuter[0], NormVecOuter[1]]
+        #     # print(JBP[tmp_o, :] )
+        #     tmp_o = tmp_o + 1
+
+io = np.where(JBP[:, 0] == -2)[0][0]
+JBP = JBP[0:io, :]
+
+# ElementID, LocalEdgeID, u, v
+JBV = np.zeros((NumEles * 3, 4)) - 2
+tmp_o = 0
+for i in range(NumEles):
+    for j in range(4):
+        PntID1 = Elements[i, j]
+        PntID2 = Elements[i, (j + 1) % 4]
+        if (Points[PntID1, 0] == 0 and Points[PntID2, 0] == 0):
+            JBV[tmp_o, :] = [i, j, 0, 0]
+            tmp_o = tmp_o + 1
+        elif Points[PntID1, 0] == 0.2 and Points[PntID2, 0] == 0.2:
+            JBV[tmp_o, :] = [i, j, 0, 0]
+            tmp_o = tmp_o + 1
+io = np.where(JBV[:, 0] == -2)[0][0]
+JBV = JBV[0:io, :]
+
 with h5py.File("Structured_Mesh.h5", "w") as f:
     f.create_dataset("Points", data=Points)
     f.create_dataset("Elements", data=Elements)
     f.create_dataset("Points_h", data=Points_h)
     f.create_dataset("Elements_h", data=Elements_h)
+    f.create_dataset("JBP", data=JBP)
+    f.create_dataset("JBV", data=JBV)
 
 # fig,ax = plt.subplots()
 # ax.plot(Points[Elements[0, :], 0], Points[Elements[0, :], 1])
@@ -117,17 +187,20 @@ with h5py.File("Structured_Mesh.h5", "w") as f:
 #     ax.text(Points[Elements[0, i], 0], Points[Elements[0, i], 1], str(Elements[0, i]) + ', ' + str(i + 1))
 # plt.show()
 
-fig,ax=plt.subplots(1, 2)
+fig, ax = plt.subplots(1, 2)
 
 for h in range(np.shape(Elements_h)[0]):
-    ax[0].plot(Points_h[Elements_h[h, :], 0], Points_h[Elements_h[h, :], 1], 'o')
+    ax[0].plot(Points_h[Elements_h[h, :], 0],
+               Points_h[Elements_h[h, :], 1], 'o')
     for i in range(np.shape(Elements_h)[1]):
-        ax[0].text(Points_h[Elements_h[h, i], 0], Points_h[Elements_h[h, i], 1], str(Elements_h[h, i]))# + ', ' + str(i + 1))
+        ax[0].text(Points_h[Elements_h[h, i], 0], Points_h[Elements_h[h, i], 1], str(
+            Elements_h[h, i]))  # + ', ' + str(i + 1))
 
 for h in range(np.shape(Elements)[0]):
     ax[1].plot(Points[Elements[h, :], 0], Points[Elements[h, :], 1], 'o')
     for i in range(np.shape(Elements)[1]):
-        ax[1].text(Points[Elements[h, i], 0], Points[Elements[h, i], 1], str(Elements[h, i]))# + ', ' + str(i + 1))
+        ax[1].text(Points[Elements[h, i], 0], Points[Elements[h, i],
+                   1], str(Elements[h, i]))  # + ', ' + str(i + 1))
 
 plt.show()
 

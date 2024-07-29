@@ -145,7 +145,7 @@ for e = 1:NumEles
                 (pnt_y_4(l) - pnt_y_4(mod(l, 4)+1))^2);
             if pnt_x_4(l) == 0 && pnt_x_4(mod(l, 4)+1) == 0
                 p_i_e([l, mod(l, 4) + 1]) = -1000;
-            elseif pnt_x_4(l) == 80 && pnt_x_4(mod(l, 4)+1) == 80
+            elseif pnt_x_4(l) == .80 && pnt_x_4(mod(l, 4)+1) == .80
                 p_i_e([l, mod(l, 4) + 1]) = 0;
             end
             cos_theta_x = 1;
@@ -168,7 +168,7 @@ for e = 1:NumEles
                 F2 = F2 + w(i) * Phi_e * Psi_e' * p_i_e * cos_theta_y * Length_boundary / 2;
             end
         elseif pnt_y_4(l) == 0 && pnt_y_4(mod(l, 4)+1) == 0 ...
-                || pnt_y_4(l) == 60 && pnt_y_4(mod(l, 4)+1) == 60
+                || pnt_y_4(l) == .6 && pnt_y_4(mod(l, 4)+1) == .6
 
             ID_reOrgnized = Elements_h(e, [1, 2, 3, 6, 9, 8, 7, 4]);
             localID_v = (l - 1) * 2 + 1;
