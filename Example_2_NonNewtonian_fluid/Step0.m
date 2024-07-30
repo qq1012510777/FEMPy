@@ -7,8 +7,8 @@ b = sparse(Dims, 1);
 
 pnt_x_9 = reshape(Points_h(Elements_h(:), 1), [NumEles, 9])';
 pnt_y_9 = reshape(Points_h(Elements_h(:), 2), [NumEles, 9])';
-pnt_x_4 = reshape(Points_h(Elements(:), 1), [NumEles, 4])';
-pnt_y_4 = reshape(Points_h(Elements(:), 2), NumEles, 4)';
+pnt_x_4 = reshape(Points(Elements(:), 1), [NumEles, 4])';
+pnt_y_4 = reshape(Points(Elements(:), 2), NumEles, 4)';
 
 D11 = zeros(9, 9, NumEles);
 D12 = zeros(9, 9, NumEles);
@@ -155,25 +155,25 @@ for e = 1:size(JBP, 1)
         xi_e_i = xi(i);
         eta_e_i = xi(i);
 
-        if JBP(e, 2) == 1
+        if l == 1
             eta_e_i = -1;
-        elseif JBP(e, 2) == 2
+        elseif l == 2
             xi_e_i = 1;
-        elseif JBP(e, 2) == 3
+        elseif l == 3
             eta_e_i = 1;
-        elseif JBP(e, 2) == 4
+        elseif l == 4
             xi_e_i = -1;
         end
 
         Phi_e = double(subs(Phi, [xi_e, eta_e], [xi_e_i, eta_e_i]));
         Psi_e = double(subs(Psi, [xi_e, eta_e], [xi_e_i, eta_e_i]));
 
-        F1 = F1 + sign(cos_theta_x) * w(i) * Phi_e * Psi_e' * p_i_e * cos_theta_x * Length_boundary / 2;
-        F2 = F2 + sign(cos_theta_y) * w(i) * Phi_e * Psi_e' * p_i_e * cos_theta_y * Length_boundary / 2;
+        F1 = F1 + w(i) * Phi_e * Psi_e' * p_i_e * cos_theta_x * Length_boundary / 2;
+        F2 = F2 + w(i) * Phi_e * Psi_e' * p_i_e * cos_theta_y * Length_boundary / 2;
     end
 
     b(Elements_h(eleID, :), 1) = b(Elements_h(e, :), 1) - F1;
-    b(Elements_h(eleID, :) + NumPnts_h, 1) = b(Elements_h(e, :)+NumPnts_h, 1) - F2;
+    b(Elements_h(eleID, :) + NumPnts_h, 1) = b(Elements_h(e, :) + NumPnts_h, 1) - F2;
 
 end
 
@@ -196,10 +196,18 @@ for i = 1:size(JBV, 1)
 end
 
 x = K \ b;
-
-pressure = full(x(2*NumPnts_h+1:end));
+pressure = -full(x(2*NumPnts_h+1:end));
 u = full(x(1:NumPnts_h));
 v = full(x(NumPnts_h+1:2*NumPnts_h));
+
+clear K b A1sums A2u AAAA D22 D11 D12 D21 
+clear D11_Idx D12_Idx D21_Idx  D22_Idx   C1_Idx   C2_Idx    B1_Idx   B2_Idx
+clear B1 B2 C1 C2 cos_theta_y cos_theta_x DetJ Dims e EigenvalueJ
+clear eleID eta_e_i eta_e_j F1 F2 i Idx_h_col Idx_h_row IndexValue
+clear ix j J eta l  Length_boundary p_i_e Phi_e Phi_eta_e Phi_x 
+clear Phi_xi_e Phi_y pnt_x_4 pnt_x_9 pnt_y_4 pnt_y_9 PntID_v
+clear Psi_e x_eta x_xi xi_ei y_eta y_xi xi_e_i
+
 
 figure(2)
 subplot(1, 2, 1)
