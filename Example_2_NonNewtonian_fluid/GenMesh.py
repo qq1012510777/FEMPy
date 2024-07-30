@@ -6,8 +6,8 @@ import os
 import sys
 
 # Dimensions
-L = 0.2
-W = 0.1
+L = 0.8
+W = 0.6
 
 
 gmsh.initialize()
@@ -157,19 +157,28 @@ for i in range(NumEles):
 io = np.where(JBP[:, 0] == -2)[0][0]
 JBP = JBP[0:io, :]
 
-# ElementID, LocalEdgeID, u, v
-JBV = np.zeros((NumEles * 3, 4)) - 2
+# PointID, u, v
+JBV = np.zeros((NumEles * 3, 3)) - 2
 tmp_o = 0
 for i in range(NumEles):
-    for j in range(4):
-        PntID1 = Elements[i, j]
-        PntID2 = Elements[i, (j + 1) % 4]
-        if (Points[PntID1, 0] == 0 and Points[PntID2, 0] == 0):
-            JBV[tmp_o, :] = [i, j, 0, 0]
+    for j in range(3):
+        PntID1 = Elements_h[i, j * 3]
+        PntID2 = Elements_h[i, j * 3 + 1]
+        PntID3 = Elements_h[i, j * 3 + 2]
+        if (Points_h[PntID1, 1] == 0 and Points_h[PntID2, 1] == 0 and Points_h[PntID3, 1] == 0):
+            JBV[tmp_o, :] = [PntID1, 0, 0]
             tmp_o = tmp_o + 1
-        elif Points[PntID1, 0] == 0.2 and Points[PntID2, 0] == 0.2:
-            JBV[tmp_o, :] = [i, j, 0, 0]
+            JBV[tmp_o, :] = [PntID2, 0, 0]
             tmp_o = tmp_o + 1
+            JBV[tmp_o, :] = [PntID3, 0, 0]
+            tmp_o = tmp_o + 1
+        elif (Points_h[PntID1, 1] == W and Points_h[PntID2, 1] == W and Points_h[PntID3, 1] == W):
+            JBV[tmp_o, :] = [PntID1, 0, 0]
+            tmp_o = tmp_o + 1
+            JBV[tmp_o, :] = [PntID2, 0, 0]
+            tmp_o = tmp_o + 1
+            JBV[tmp_o, :] = [PntID3, 0, 0]
+
 io = np.where(JBV[:, 0] == -2)[0][0]
 JBV = JBV[0:io, :]
 

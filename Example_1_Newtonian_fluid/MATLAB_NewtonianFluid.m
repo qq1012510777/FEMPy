@@ -40,15 +40,15 @@ Points_h = Points_new;
 clear Elements_new Points_new TmpPnt Pnt_ID_y Visited i j
 
 % __________________ Plot mesh __________________
-% figure(1)
-% subplot(1,2,1)
-% patch('vertices', Points_h, 'faces', Elements_h(:, [1,2,3,6,9,8,7,4]), ...
-%     'facevertexcdata', zeros(NumPnts_h, 1), 'edgealpha', 1, 'facealpha', 0)
-% pbaspect([Lx, Ly, 1])
-% subplot(1,2,2)
-% patch('vertices', Points, 'faces', Elements, 'facevertexcdata', ...
-%     zeros(NumPnts, 1), 'edgealpha', 1, 'facealpha', 0)
-% pbaspect([Lx, Ly, 1])
+figure(1)
+subplot(1,2,1)
+patch('vertices', Points_h, 'faces', Elements_h(:, [1,2,3,6,9,8,7,4]), ...
+    'facevertexcdata', zeros(NumPnts_h, 1), 'edgealpha', 1, 'facealpha', 0)
+pbaspect([Lx, Ly, 1])
+subplot(1,2,2)
+patch('vertices', Points, 'faces', Elements, 'facevertexcdata', ...
+    zeros(NumPnts, 1), 'edgealpha', 1, 'facealpha', 0)
+pbaspect([Lx, Ly, 1])
 
 
 % _________________ solver _______________

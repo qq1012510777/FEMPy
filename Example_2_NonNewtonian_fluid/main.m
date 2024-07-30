@@ -9,7 +9,7 @@ Elements_h = h5read("Structured_Mesh.h5", "/Elements_h")' + 1;
 JBP = h5read("Structured_Mesh.h5", "/JBP")';
 JBV = h5read("Structured_Mesh.h5", "/JBV")';
 JBP(:, [1,2]) = JBP(:, [1,2]) + 1;
-JBV(:, [1,2]) = JBV(:, [1,2]) + 1;
+JBV(:, 1) = JBV(:, 1) + 1;
 
 NumPnts_h = size(Points_h, 1);
 NumPnts = size(Points, 1);
@@ -28,6 +28,8 @@ Ly = max(Points(:, 2)) - min(Points(:, 2));
 % patch('vertices', Points, 'faces', Elements, 'facevertexcdata', ...
 %     zeros(NumPnts, 1), 'edgealpha', 1, 'facealpha', 0)
 % pbaspect([Lx, Ly, 1])
+% hold on
+% scatter(Points_h(JBV(:, 1), 1), Points_h(JBV(:, 1), 2), 'o')
 % -------------------------------------------
 syms xi_e real
 syms eta_e real
@@ -54,4 +56,3 @@ w = [0.171324492379170, 0.360761573048139, 0.467913934572691, 0.171324492379170,
 
 m = 1e3;
 Step0;
-
