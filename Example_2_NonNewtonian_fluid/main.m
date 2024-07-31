@@ -56,3 +56,40 @@ w = [0.171324492379170, 0.360761573048139, 0.467913934572691, 0.171324492379170,
 
 m = 1e3;
 Step0;
+
+for n = 0.9:-0.2:0.5
+    steps = 0;
+    R_absolute = 1e4;
+    R_relative = 1e4;
+
+    while steps < 20 && R_absolute > 1e-3 && R_relative > 1e-3
+        StepMu;
+
+        disp(['R_ab = ', num2str(R_absolute), ', R_re = ', num2str(R_relative), ', step = ', num2str(steps), ', n = ', num2str(n)])
+        steps = steps + 1;
+
+    end
+
+    figure(2)
+    subplot(1, 2, 1)
+    title("Pressure")
+    patch('vertices', Points, 'faces', Elements, 'facevertexcdata', pressure, ...
+        'FaceColor', 'interp', 'EdgeAlpha', 1, 'facealpha', 1);
+    hold on
+    colorbar;
+    pbaspect([Lx, Ly, 1])
+    
+    figure(2)
+    subplot(1, 2, 2)
+    title("Velocity vectors")
+    patch('vertices', Points_h, 'faces', Elements_h(:, [1, 2, 3, 6, 9, 8, 7, 4]), ...
+        'facevertexcdata', zeros(NumPnts_h, 1), 'edgealpha', 1, 'facealpha', 0);
+    hold on
+    quiver(Points_h(:, 1), Points_h(:, 2), u, v, 1);
+    hold on
+    pbaspect([Lx, Ly, 1])
+
+    pause
+    close(2)
+end
+

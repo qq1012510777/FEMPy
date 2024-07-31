@@ -1,5 +1,3 @@
-mu = m;
-
 Dims = 2 * NumPnts_h + NumPnts;
 
 K = sparse(Dims, Dims);
@@ -21,6 +19,8 @@ C2 = zeros(9, 4, NumEles);
 B1 = zeros(4, 9, NumEles);
 B2 = zeros(4, 9, NumEles);
 
+Mu_ElementWise = reshape(Mu_eachPnt(Elements_h'), 9, 1, NumEles);
+
 for i = 1:6
     xi_e_i = xi(i);
     for j = 1:6
@@ -29,6 +29,9 @@ for i = 1:6
         Phi_xi_e = double(subs(Phi_xi, [xi_e, eta_e], [xi_e_i, eta_e_j]));
         Phi_eta_e = double(subs(Phi_eta, [xi_e, eta_e], [xi_e_i, eta_e_j]));
         Psi_e = double(subs(Psi, [xi_e, eta_e], [xi_e_i, eta_e_j]));
+        Phi_e = double(subs(Phi, [xi_e, eta_e], [xi_e_i, eta_e_j]));
+
+        Mu_h = pagemtimes(Phi_e', Mu_ElementWise);
 
         x_xi = Phi_xi_e' * pnt_x_9;
         y_xi = Phi_xi_e' * pnt_y_9;
@@ -54,14 +57,14 @@ for i = 1:6
 
         % D11 = D11 + mu * w(i) * w(j) * (2 * (Phi_x * Phi_x') + (Phi_y * Phi_y')) * detJ;
 
-        D11 = D11 + mu * w(i) * w(j) * pagemtimes((2 * pagemtimes(Phi_x, reshape(Phi_x, [size(Phi_x, 2), size(Phi_x, 1), size(Phi_x, 3)])) ...
-            +pagemtimes(Phi_y, reshape(Phi_y, [size(Phi_y, 2), size(Phi_y, 1), size(Phi_y, 3)]))), DetJ);
-        D12 = D12 + mu * w(i) * w(j) * pagemtimes((pagemtimes(Phi_x, reshape(Phi_y, [size(Phi_y, 2), size(Phi_y, 1), size(Phi_y, 3)])) ...
-            ), DetJ);
-        D21 = D21 + mu * w(i) * w(j) * pagemtimes((pagemtimes(Phi_y, reshape(Phi_x, [size(Phi_x, 2), size(Phi_x, 1), size(Phi_x, 3)])) ...
-            ), DetJ);
-        D22 = D22 + mu * w(i) * w(j) * pagemtimes((2 * pagemtimes(Phi_y, reshape(Phi_y, [size(Phi_y, 2), size(Phi_y, 1), size(Phi_y, 3)])) ...
-            +pagemtimes(Phi_x, reshape(Phi_x, [size(Phi_x, 2), size(Phi_x, 1), size(Phi_x, 3)]))), DetJ);
+        D11 = D11 + w(i) * w(j) * pagemtimes(Mu_h, pagemtimes((2 * pagemtimes(Phi_x, reshape(Phi_x, [size(Phi_x, 2), size(Phi_x, 1), size(Phi_x, 3)])) ...
+            +pagemtimes(Phi_y, reshape(Phi_y, [size(Phi_y, 2), size(Phi_y, 1), size(Phi_y, 3)]))), DetJ));
+        D12 = D12 + w(i) * w(j) * pagemtimes(Mu_h, pagemtimes((pagemtimes(Phi_x, reshape(Phi_y, [size(Phi_y, 2), size(Phi_y, 1), size(Phi_y, 3)])) ...
+            ), DetJ));
+        D21 = D21 + w(i) * w(j) * pagemtimes(Mu_h, pagemtimes((pagemtimes(Phi_y, reshape(Phi_x, [size(Phi_x, 2), size(Phi_x, 1), size(Phi_x, 3)])) ...
+            ), DetJ));
+        D22 = D22 + w(i) * w(j) * pagemtimes(Mu_h, pagemtimes((2 * pagemtimes(Phi_y, reshape(Phi_y, [size(Phi_y, 2), size(Phi_y, 1), size(Phi_y, 3)])) ...
+            +pagemtimes(Phi_x, reshape(Phi_x, [size(Phi_x, 2), size(Phi_x, 1), size(Phi_x, 3)]))), DetJ));
 
         % C1 = C1 + w(i) * w(j) * (Phi_x * Psi_e') * detJ;
         C1 = C1 + w(i) * w(j) * pagemtimes(pagemtimes(Phi_x, Psi_e'), DetJ);
@@ -196,15 +199,23 @@ for i = 1:size(JBV, 1)
 end
 
 x = K \ b;
-pressure = full(x(2*NumPnts_h+1:end));
-u = full(x(1:NumPnts_h));
-v = full(x(NumPnts_h+1:2*NumPnts_h));
+pressure_1 = full(x(2*NumPnts_h+1:end));
+u_1 = full(x(1:NumPnts_h));
+v_1 = full(x(NumPnts_h+1:2*NumPnts_h));
 
-% 
+clear K b A1sums A2u AAAA D22 D11 D12 D21 
+clear D11_Idx D12_Idx D21_Idx  D22_Idx   C1_Idx   C2_Idx    B1_Idx   B2_Idx
+clear B1 B2 C1 C2 cos_theta_y cos_theta_x DetJ Dims e EigenvalueJ
+clear eleID eta_e_i eta_e_j F1 F2 i Idx_h_col Idx_h_row IndexValue
+clear ix j J eta l  Length_boundary p_i_e Phi_e Phi_eta_e Phi_x 
+clear Phi_xi_e Phi_y pnt_x_4 pnt_y_4 PntID_v
+clear Psi_e x_eta x_xi xi_ei y_eta y_xi xi_e_i mu
+
+
 % figure(2)
 % subplot(1, 2, 1)
 % title("Pressure")
-% patch('vertices', Points, 'faces', Elements, 'facevertexcdata', pressure, ...
+% patch('vertices', Points, 'faces', Elements, 'facevertexcdata', pressure_1, ...
 %     'FaceColor', 'interp', 'EdgeAlpha', 1, 'facealpha', 1);
 % hold on
 % colorbar;
@@ -216,13 +227,12 @@ v = full(x(NumPnts_h+1:2*NumPnts_h));
 % patch('vertices', Points_h, 'faces', Elements_h(:, [1, 2, 3, 6, 9, 8, 7, 4]), ...
 %     'facevertexcdata', zeros(NumPnts_h, 1), 'edgealpha', 1, 'facealpha', 0);
 % hold on
-% quiver(Points_h(:, 1), Points_h(:, 2), u, v, 1);
+% quiver(Points_h(:, 1), Points_h(:, 2), u_1, v_1, 1);
 % hold on
 % pbaspect([Lx, Ly, 1])
 
 
 % ____________________________calculate mu (non-Newtonian) ___________-
-n = 0.9;
 ElementWise_u = reshape(u(Elements_h(:), 1), [9, 1, NumEles]);
 ElementWise_v = reshape(v(Elements_h(:), 1), [9, 1, NumEles]);
 
@@ -264,13 +274,13 @@ for i = 1:9
 
 end
 
-Mu_eachPnt = [double(Elements_h(:)), mu_dynamic(:) .* AreaElements(:)];
-Mu_eachPnt = sortrows(Mu_eachPnt, 1);
+Mu_eachPnt_1 = [double(Elements_h(:)), mu_dynamic(:) .* AreaElements(:)];
+Mu_eachPnt_1 = sortrows(Mu_eachPnt_1, 1);
 
 % sort the elements in the same positions, sum them if they are in the same positions
-[A2u, ~, ix] = unique(Mu_eachPnt(:, 1));
-A1sums = accumarray(ix, Mu_eachPnt(:, 2), [], @sum);
-Mu_eachPnt = [A2u, A1sums];
+[A2u, ~, ix] = unique(Mu_eachPnt_1(:, 1));
+A1sums = accumarray(ix, Mu_eachPnt_1(:, 2), [], @sum);
+Mu_eachPnt_1 = [A2u, A1sums];
 
 Mu_sumArea = [double(Elements_h(:)), AreaElements(:)];
 Mu_sumArea = sortrows(Mu_sumArea, 1);
@@ -280,13 +290,15 @@ Mu_sumArea = sortrows(Mu_sumArea, 1);
 A1sums = accumarray(ix, Mu_sumArea(:, 2), [], @sum);
 Mu_sumArea = [A2u, A1sums];
 
-Mu_eachPnt(:, 2) = Mu_eachPnt(:, 2) ./ Mu_sumArea(:, 2);
+Mu_eachPnt_1(:, 2) = Mu_eachPnt_1(:, 2) ./ Mu_sumArea(:, 2);
 
-Mu_eachPnt(:, 1) = [];
+Mu_eachPnt_1(:, 1) = [];
 
 Mu_eachPnt(Mu_eachPnt > 1e10) = 1e10;
 Mu_eachPnt(Mu_eachPnt < 1e-10) = 1e-10;
 
+clear Mu_sumArea A1sums ix AreaElements ElementWise_u ElementWise_v
+clear xi_mu eta_mu mu_dynamic A2u
 clear Mu_sumArea A1sums ix AreaElements ElementWise_u ElementWise_v
 clear xi_mu eta_mu mu_dynamic A2u
 clear K b A1sums A2u AAAA D22 D11 D12 D21 
@@ -299,3 +311,15 @@ clear Psi_e x_eta x_xi xi_ei y_eta y_xi xi_e_i mu
 clear AAAA DetJ EigenvalueJ Phi_eta_e Phi_xi_e Phi_x_times_u Phi_y_times_v Phi_x_times_v Phi_y_times_u
 clear pnt_x_9 pnt_y_9
 %_____________________________________________________________________
+
+R_absolute = max(vecnorm([u', v', pressure', Mu_eachPnt'; u_1', v_1', pressure_1', Mu_eachPnt_1'])) .* 0.01;
+R_relative = max(vecnorm([u', v', pressure', Mu_eachPnt'; u_1', v_1', pressure_1', Mu_eachPnt_1']) ...
+    ./ abs([u_1', v_1', pressure_1', Mu_eachPnt_1'])) .* 0.01;
+
+u = u_1;
+v = v_1;
+pressure = pressure_1;
+Mu_eachPnt = Mu_eachPnt_1;
+% close(2)
+
+clear  u_1 v_1 pressure_1 Mu_eachPnt_1
